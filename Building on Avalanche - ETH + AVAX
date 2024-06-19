@@ -1,0 +1,64 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import"@openzeppelin/contracts/access/Ownable.sol";
+contract MyToken is ERC20, Ownable {
+
+    mapping(uint256 => uint256) public productPrices;
+    mapping(address => uint256) public userInventory;
+
+    constructor() ERC20("MyToken", "MTK") Ownable(msg.sender) {
+        productPrices[1] = 400;
+        productPrices[2] = 350;
+        productPrices[3] = 250;
+        productPrices[4] = 50;
+    }
+
+    function mintMTK(address _to, uint256 _amount) public onlyOwner {
+        _mint(_to, _amount);
+    }
+
+    function transferMTK(address _to, uint256 _amount) public {
+        require(balanceOf(msg.sender) >= _amount, "Transfer Failed: Insufficient balance.");
+        approve(msg.sender, _amount);
+        transferFrom(msg.sender, _to, _amount);
+    }
+
+    function showMarketplaceProducts() external pure returns (string memory) {
+        string memory saleOptions = "The products on sale: {1} NFT (100) {2} T-shirt & Hoodie (60) {3} Item (30) {4} Sticker (10)";
+        return saleOptions;
+    }
+
+    function purchaseProduct(uint256 _product) public {
+        require(productPrices[_product] > 0, "Product is not available.");
+        require(_product <= 4, "Product is not available.");
+        require(balanceOf(msg.sender) >= productPrices[_product], "Buy Failed: Insufficient balance.");
+        
+        userInventory[msg.sender] = _product;
+        transfer(owner(), productPrices[_product]);
+    }
+
+    function redeemProduct() public {
+        uint256 product = userInventory[msg.sender];
+        require(product > 0, "No product to redeem.");
+        require(productPrices[product] > 0, "Product is not available.");
+        transferFrom(owner(), msg.sender, productPrices[product]);
+        delete userInventory[msg.sender];
+    }
+
+    function burnMTK(uint256 _amount) public {
+        require(balanceOf(msg.sender) >= _amount, "Burn Failed: Insufficient balance.");
+        approve(msg.sender, _amount);
+        _burn(msg.sender, _amount);
+    }
+
+    function getBalance() external view returns (uint256) {
+        return balanceOf(msg.sender);
+    }
+
+    function decimals() override public pure returns (uint8) {
+        return 0;
+    }
+}
+      
